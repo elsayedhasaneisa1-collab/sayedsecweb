@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAYODA SPACE COMMAND</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#01040a;color:#dcecf3;font-family:Arial,sans-serif;overflow:hidden}canvas{position:fixed;inset:0}
+.panel{position:fixed;background:rgba(3,10,16,.86);border:1px solid #18313e;box-shadow:0 10px 40px #0009;backdrop-filter:blur(10px);border-radius:10px}
+#top{top:9px;left:9px;right:9px;height:57px;padding:0 15px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:900;letter-spacing:2px}.brand b{color:#38d7ff}.tiny{font-size:9px;color:#627d89}.live{color:#50e19a;font-size:11px}
+#side{top:77px;right:9px;width:275px;padding:14px}.title{font-size:11px;letter-spacing:1px;color:#8fb6c4;margin-bottom:12px}.r{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #11242d;font:11px monospace}.v{color:#4ddaff}
+#menu{left:9px;top:77px;width:205px;padding:10px}button{display:block;width:100%;margin:6px 0;padding:10px;background:#06141c;border:1px solid #17404e;border-radius:7px;color:#c8eaf2;font-weight:bold;text-align:right}button:hover{border-color:#37d8ff}
+#bottom{left:9px;right:9px;bottom:9px;height:58px;padding:9px;display:flex;align-items:center;gap:8px}.console{font:10px monospace;color:#77939e;flex:1;overflow:hidden;white-space:nowrap}.ok{color:#51dfa0}
+#cross{position:fixed;left:50%;top:50%;width:38px;height:38px;transform:translate(-50%,-50%);pointer-events:none;opacity:.45}.h,.v{position:absolute;background:#55dcff}.h{width:38px;height:1px;top:19px}.v{height:38px;width:1px;left:19px}
+@media(max-width:650px){#side{width:205px}.tiny{display:none}#menu{width:155px}.r{font-size:9px}button{font-size:10px}}
+</style>
+</head>
+<body>
+<div id="top" class="panel"><div class="brand">SAYODA <b>SPACE COMMAND</b></div><div><span class="tiny">ORBITAL OPERATIONS • SIMULATION</span> &nbsp; <span class="live">● LINK NOMINAL</span></div></div>
+<div id="side" class="panel"><div class="title">SELECTED OBJECT / LEO-01</div>
+<div class="r"><span>ALTITUDE</span><span class="v" id="alt">550 km</span></div><div class="r"><span>VELOCITY</span><span class="v" id="vel">7.59 km/s</span></div>
+<div class="r"><span>LAT</span><span class="v" id="lat">00.00°</span></div><div class="r"><span>LON</span><span class="v" id="lon">00.00°</span></div>
+<div class="r"><span>INCLINATION</span><span class="v">51.6°</span></div><div class="r"><span>ORBIT</span><span class="v" id="orb">001</span></div>
+<div class="r"><span>LINK</span><span class="ok">LOCKED</span></div></div>
+<div id="menu" class="panel">
+<div class="title">MISSION TOOLS</div><button id="earth">🌍 EARTH VIEW</button><button id="track">🎯 TRACK OBJECT</button><button id="grid">⊞ ORBIT GRID</button><button id="rate">▶ TIME ×1</button>
+</div><div id="cross"><i class="h"></i><i class="v"></i></div>
+<div id="bottom" class="panel"><div class="console">[SYSTEM] orbital propagation active • telemetry stream <span class="ok">NOMINAL</span> • ground track calculated locally</div></div>
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+const s=new THREE.Scene(),c=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,3000);c.position.set(0,25,48);
+const r=new THREE.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.setSize(innerWidth,innerHeight);document.body.appendChild(r.domElement);
+const ctl=new OrbitControls(c,r.domElement);ctl.enableDamping=true;ctl.minDistance=11;ctl.maxDistance=140;
+s.add(new THREE.AmbientLight(0x8aa8b8,1.35));let sun=new THREE.DirectionalLight(0xffffff,3);sun.position.set(30,25,35);s.add(sun);
+let earth=new THREE.Mesh(new THREE.SphereGeometry(10,64,64),new THREE.MeshStandardMaterial({color:0x126184,roughness:.9}));s.add(earth);
+s.add(new THREE.Mesh(new THREE.SphereGeometry(10.4,64,64),new THREE.MeshBasicMaterial({color:0x36cfff,transparent:true,opacity:.1,side:THREE.BackSide})));
+let sg=new THREE.BufferGeometry(),p=[];for(let i=0;i<4200;i++){let R=650,u=Math.random()*2-1,a=Math.random()*6.28,q=Math.sqrt(1-u*u);p.push(R*q*Math.cos(a),R*u,R*q*Math.sin(a))}sg.setAttribute("position",new THREE.Float32BufferAttribute(p,3));s.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xb9eaff,size:.6})));
+let radius=13.5,angle=0,rate=1,grid=true,tracking=false,orbit=1;
+const og=new THREE.BufferGeometry(),op=[];for(let i=0;i<=360;i++){let a=i*Math.PI/180;op.push(radius*Math.cos(a),0,radius*Math.sin(a))}og.setAttribute("position",new THREE.Float32BufferAttribute(op,3));const line=new THREE.Line(og,new THREE.LineBasicMaterial({color:0x2fd6ff,transparent:true,opacity:.4}));s.add(line);
+let sat=new THREE.Group(),b=new THREE.Mesh(new THREE.BoxGeometry(1.1,.7,.85),new THREE.MeshStandardMaterial({color:0xdce9ed,metalness:.6,roughness:.3}));sat.add(b);for(let x of[-1.2,1.2]){let q=new THREE.Mesh(new THREE.BoxGeometry(1.15,.06,1.55),new THREE.MeshStandardMaterial({color:0x184f82,metalness:.25}));q.position.x=x;sat.add(q)}s.add(sat);
+function stats(){let R=6371+550,v=Math.sqrt(398600/R);alt.textContent="550 km";vel.textContent=v.toFixed(2)+" km/s"}stats();
+track.onclick=()=>tracking=!tracking;grid.onclick=()=>{grid=!grid;line.visible=grid};earth.onclick=()=>{c.position.set(0,18,31);ctl.target.set(0,0,0)};rate.onclick=()=>{rate=rate===1?4:1;rate.textContent="▶ TIME ×"+rate};
+const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);let dt=clock.getDelta();angle+=dt*.55*rate;if(angle>6.283){angle-=6.283;orbit++}let la=51.6*Math.sin(angle),lo=((angle*97*180/Math.PI+180)%360)-180;lat.textContent=la.toFixed(2)+"°";lon.textContent=lo.toFixed(2)+"°";orb.textContent=String(orbit).padStart(3,"0");sat.position.set(radius*Math.cos(angle),0,radius*Math.sin(angle));sat.rotation.y=-angle+Math.PI/2;earth.rotation.y+=dt*.025;if(tracking){c.lookAt(sat.position)}ctl.update();r.render(s,c)}loop();
+onresize=()=>{c.aspect=innerWidth/innerHeight;c.updateProjectionMatrix();r.setSize(innerWidth,innerHeight)}
+</script></body></html>
